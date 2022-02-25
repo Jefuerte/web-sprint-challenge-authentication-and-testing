@@ -1,7 +1,27 @@
 const router = require('express').Router();
+const jwt = require('jsonwebtoken')
+const bcrypt = require('bcryptjs')
+const Jokes = require('../jokes/jokes-model')
+const {
+  userExists,
+  checkPayload,
+  checkUserDB
+} = require('../middleware/middleware')
 
-router.post('/register', (req, res) => {
-  res.end('implement register, please!');
+router.post('/register', checkPayload, checkUserDB, async, (req, res) => {
+  try {
+    const hash = bcrypt.hashSync(req.body.password, 8)
+    const newUser = await Jokes.add({
+      id: req.body.id,
+      username: req.body.username,
+      password: hash
+    })
+    res.status(201).json(newUser)
+  } catch(e) {
+      res.status(500).json({
+        message: e.message
+      })
+  }
   /*
     IMPLEMENT
     You are welcome to build additional middlewares to help with the endpoint's functionality.
@@ -27,10 +47,26 @@ router.post('/register', (req, res) => {
     4- On FAILED registration due to the `username` being taken,
       the response body should include a string exactly as follows: "username taken".
   */
+  
 });
 
-router.post('/login', (req, res) => {
-  res.end('implement login, please!');
+router.post('/login', checkPayload, userExists, (req, res) => {
+  let { username, password } = req.body
+
+  Jokes.findByUsername({ username })
+    .then(([user]) => {
+      if(user && bcrypt.compareSync(password, user.password)) {
+        const token = makeToken(user)
+        res.status(200).json({ 
+          message: `Welcome ${user.name}`,
+          token
+        })
+      } else {
+        res.json({ 
+          message: 'missing credentials'
+        })
+      }
+    })
   /*
     IMPLEMENT
     You are welcome to build additional middlewares to help with the endpoint's functionality.
@@ -54,6 +90,17 @@ router.post('/login', (req, res) => {
     4- On FAILED login due to `username` not existing in the db, or `password` being incorrect,
       the response body should include a string exactly as follows: "invalid credentials".
   */
-});
+    });
+
+  function maketoken(user) {
+    const payload = {
+      subject: user.id,
+      username: user.username
+    }
+    const options = {
+      expiresIn: '600s'
+    }
+    return jwt.sign(payload, jwt, options)
+  }
 
 module.exports = router;
