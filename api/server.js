@@ -21,6 +21,6 @@ server.use((err, req, res, next) => { // eslint-disable-line
         message: err.message,
         stack: err.stack,
     });
-  });
+    });
 
 module.exports = server;

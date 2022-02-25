@@ -2,24 +2,28 @@ const router = require('express').Router();
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
 const Jokes = require('../jokes/jokes-model')
+const jwtSecret = require('../../config/secrets')
 
-const {
-  userExists,
-  checkPayload,
-  checkUserDB
-} = require('../middleware/middleware')
+const { 
+  checkUserExists, 
+  validateBody } = require('./auth-middleware')
 
-router.post('/register', checkPayload, checkUserDB, async (req, res) => {
-  try{
-    const hash = bcrypt.hashSync(req.body.password, 8)
-    const newUser = await Jokes.add({id: req.body.id, username: req.body.username, password: hash})
-  
-    res.status(201).json(newUser)
-    } catch(e) {
-      res.status(500).json({message: 'username taken'})
-      
-    }
-  });
+router.post('/register',checkUserExists,validateBody,  async (req, res, next) => {
+
+  try {
+    const { username , password} = req.body
+    const hash = bcrypt.hashSync(password, 8)
+    const user = { username: username , password: hash} 
+
+    const NewUser = await Jokes.add(user)
+    res.status(201).json({id: NewUser.id,
+                        username: NewUser.username,
+                        password: NewUser.password,
+                      })
+  } catch(err) {
+    next(err)
+  }
+});
   /*
     IMPLEMENT
     You are welcome to build additional middlewares to help with the endpoint's functionality.
@@ -48,22 +52,22 @@ router.post('/register', checkPayload, checkUserDB, async (req, res) => {
   
 
 
-  router.post('/login', checkPayload, userExists, (req, res) => {
-    let {username, password} = req.body
-      Jokes.findByUserName({username})
-        .then(([user]) => {
-          if(user && bcrypt.compareSync(password, user.password)){
-            const token = makeToken(user)
-            res.status(200).json({
-              message: `welcome ${user.name}`,
-              token
-            })
-          } else {
-            res.json({
-              message: "username and password required"
-            })
-          }
-        })
+      router.post('/login', validateBody,async (req, res, next) => {  
+        const { username , password } = req.body 
+        const newUser = await Jokes.findBy({username})
+        const user = newUser[0]
+        if(user && bcrypt.compareSync(password, user.password) ){
+        // generate a token and include it in the response
+        const token = generateToken(user)
+          res.status(200).json({
+            message :`welcome, ${user.username}`,
+            token: token
+          })
+        } else {
+          next({ status: 401, message: 'invalid credentials' })
+        }
+
+})
   /*
     IMPLEMENT
     You are welcome to build additional middlewares to help with the endpoint's functionality.
@@ -87,17 +91,21 @@ router.post('/register', checkPayload, checkUserDB, async (req, res) => {
     4- On FAILED login due to `username` not existing in the db, or `password` being incorrect,
       the response body should include a string exactly as follows: "invalid credentials".
   */
-    });
+      function generateToken (user) {
+        const payload = {
+          subject: user.id,
+          username: user.username
+        }
+      
+        const options = {
+          expiresIn: '1d',
+        }
+        const secret = jwtSecret.jwtSecret
+      
+        return jwt.sign(payload,secret,options)
+      
+      }
 
-  function makeToken(user) {
-    const payload = {
-      subject: user.id,
-      username: user.username
-    }
-    const options = {
-      expiresIn: '600s'
-    }
-    return jwt.sign(payload, jwt, options)
-  }
+  
 
 module.exports = router;

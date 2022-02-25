@@ -1,49 +1,47 @@
-const Jokes = require('../jokes/jokes-model')
+const User = require('../jokes/jokes-model')
 
-const checkPayload = (req, res, next) => {
-    if(!req.body.username || !req.body.password ){
-        res.status(401).json({message: "username and password required"})
-    }
-    else{
-        next()
-    }
-}
-
-const checkUserDB =  async (req,res,next) => {
+const checkUserExists = async(req, res, next ) => {
     try{
-        const row = await Jokes.findBy({username: req.body.username})
-        if(!row.length){
+        const { username } = req.body 
+        const newUser = await User.findBy({username})
+        if(newUser[0]){
+            next({
+                status: 422,
+                message:'The username is already taken'})
+        } else {
             next()
         }
-        else {
-            res.status(401).json("username taken")
-    } 
-    } catch(e) {
-        res.status(500).json(`server error: ${e.message}`)
-
+    } catch(err){
+        next(err)
     }
 }
 
 
 
-const userExists = async ( req, res, next) => {
+const validateBody = async(req, res, next ) => {
     try{
-        const rows = await Jokes.findByUserName({username: req.body.username})
-        if(rows.length.trim()){
-        req.userData = rows[0]
-        next()
-        }else{
-        res.status(401).json({
-            message: "Invalid credentials"
-        })
+
+        const { username , password } =  req.body
+        if(!username || !password ||
+            typeof password !== 'string' || 
+            !password.trim() || 
+            !username.trim() ) {
+                next({
+                    status: 400,
+                    message: 'username and password required'
+                })
+
+        } else {
+            next()
         }
-        }catch(e){
-        res.status(500).json('Server broke')
+
+    } catch(err){
+        next(err)
     }
 }
+
 
 module.exports = {
-    userExists,
-    checkPayload,
-    checkUserDB
+checkUserExists,
+validateBody
 }
