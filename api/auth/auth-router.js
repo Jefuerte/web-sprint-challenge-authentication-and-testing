@@ -16,7 +16,7 @@ router.post('/register', checkPayload, checkUserDB, async (req, res) => {
   
     res.status(201).json(newUser)
     } catch(e) {
-      res.status(500).json({message: e.message})
+      res.status(500).json({message: 'username taken'})
       
     }
   });
@@ -48,23 +48,22 @@ router.post('/register', checkPayload, checkUserDB, async (req, res) => {
   
 
 
-router.post('/login', checkPayload, userExists, (req, res) => {
-  let { username, password } = req.body
-
-  Jokes.findByUsername({ username })
-    .then(([user]) => {
-      if(user && bcrypt.compareSync(password, user.password)) {
-        const token = makeToken(user)
-        res.status(200).json({ 
-          message: `Welcome ${user.name}`,
-          token
+  router.post('/login', checkPayload, userExists, (req, res) => {
+    let {username, password} = req.body
+      Jokes.findByUserName({username})
+        .then(([user]) => {
+          if(user && bcrypt.compareSync(password, user.password)){
+            const token = makeToken(user)
+            res.status(200).json({
+              message: `welcome ${user.name}`,
+              token
+            })
+          } else {
+            res.json({
+              message: "username and password required"
+            })
+          }
         })
-      } else {
-        res.json({ 
-          message: 'missing credentials'
-        })
-      }
-    })
   /*
     IMPLEMENT
     You are welcome to build additional middlewares to help with the endpoint's functionality.
