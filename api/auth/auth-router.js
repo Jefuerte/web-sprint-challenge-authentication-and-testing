@@ -6,7 +6,7 @@ const jwtSecret = require('../../config/secrets')
 
 const { 
   checkUserExists, 
-  validateBody } = require('./auth-middleware')
+  validateBody } = require('../middleware/middleware')
 
 router.post('/register',checkUserExists,validateBody,  async (req, res, next) => {
 
