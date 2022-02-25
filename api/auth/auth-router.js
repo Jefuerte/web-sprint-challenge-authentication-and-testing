@@ -63,7 +63,7 @@ router.post('/register',checkUserExists,validateBody,  async (req, res, next) =>
             token: token
           })
         } else {
-          next({ status: 401, message: 'username and password required' })
+          next({ status: 401, message: 'invalid credentials' })
         }
 
 })
