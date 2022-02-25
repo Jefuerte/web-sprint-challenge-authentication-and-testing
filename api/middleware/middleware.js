@@ -22,7 +22,7 @@ const validateBody = async(req, res, next ) => {
     try{
 
         const { username , password } =  req.body
-        if(!username && !password ||
+        if(!username || !password ||
             typeof password !== 'string' || 
             !password.trim() || 
             !username.trim() ) {
