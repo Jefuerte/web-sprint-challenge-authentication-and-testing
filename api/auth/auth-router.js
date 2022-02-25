@@ -2,25 +2,22 @@ const router = require('express').Router();
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
 const Jokes = require('../jokes/jokes-model')
-const jwtSecret = require('../../config/secrets')
+
 const {
   userExists,
   checkPayload,
   checkUserDB
 } = require('../middleware/middleware')
 
-router.post('/register', checkPayload, checkUserDB, (req, res) => {
-  const { username, password } = req.body
-  const { role_name } = req
-  const hash = bcrypt.hashSync(password, 8)
-  Jokes.add({ username, password: hash, role_name })
-    .then((newUser) => {
-      res.status(201).json(newUser)
-    })
-    .catch(e){ 
-      res.status(500).json({
-        message: e.message
-      })
+router.post('/register', checkPayload, checkUserDB, async (req, res) => {
+  try{
+    const hash = bcrypt.hashSync(req.body.password, 8)
+    const newUser = await Jokes.add({id: req.body.id, username: req.body.username, password: hash})
+  
+    res.status(201).json(newUser)
+    } catch(e) {
+      res.status(500).json({message: e.message})
+      
     }
   });
   /*
