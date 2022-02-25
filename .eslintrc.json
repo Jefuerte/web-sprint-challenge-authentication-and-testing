@@ -6,9 +6,7 @@
         "jest": true
     },
     "extends": "eslint:recommended",
-    "parserOptions": {
-        "ecmaVersion": "latest"
-    },
+    "parser": "babel-eslint",
     "rules": {
     }
 }

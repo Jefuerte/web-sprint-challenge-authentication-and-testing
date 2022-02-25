@@ -10,14 +10,14 @@ const {
 } = require('../middleware/middleware')
 
 router.post('/register', checkPayload, checkUserDB, (req, res) => {
-  const { username, password } = req.body;
-  const { role_name } = req;
-  const hash = bcrypt.hashSync(password, 8);
+  const { username, password } = req.body
+  const { role_name } = req
+  const hash = bcrypt.hashSync(password, 8)
   Jokes.add({ username, password: hash, role_name })
     .then((newUser) => {
-      res.status(201).json(newUser);
+      res.status(201).json(newUser)
     })
-    .catch(e) {
+    .catch(e){ 
       res.status(500).json({
         message: e.message
       })
@@ -93,7 +93,7 @@ router.post('/login', checkPayload, userExists, (req, res) => {
   */
     });
 
-  function maketoken(user) {
+  function makeToken(user) {
     const payload = {
       subject: user.id,
       username: user.username
