@@ -57,14 +57,13 @@ router.post('/register',checkUserExists,validateBody,  async (req, res, next) =>
         const newUser = await Jokes.findBy({username})
         const user = newUser[0]
         if(user && bcrypt.compareSync(password, user.password) ){
-        // generate a token and include it in the response
         const token = generateToken(user)
           res.status(200).json({
             message :`welcome, ${user.username}`,
             token: token
           })
         } else {
-          next({ status: 401, message: 'invalid credentials' })
+          next({ status: 401, message: 'username and password required' })
         }
 
 })
